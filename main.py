@@ -23,6 +23,14 @@ PLAYER_JUMP_SPEED = 20
 COIN_SCALING = 0.25
 
 PLAYER_SPRITE_IMAGE_CHANGE_SPEED = 20
+RIGHT_FACING = 0
+LEFT_FACING = 1
+
+frameInSecond = 0
+isKeyPresed = False
+isKeyLeft = False
+isCameraCentered = False
+startCenterPosition_X = 0
 
 class MyGame(arcade.Window):
     """
@@ -36,8 +44,8 @@ class MyGame(arcade.Window):
         # Это "списки", которые отслеживают наши спрайты. Каждый спрайт должен
         # перейдите в список.
 
-        self.wall_list = None #набор плиточек стен ###
-        self.player_list = None #набор спрайтов ###
+        self.wall_list = None #набор плиточек стен
+        self.player_list = None #набор спрайтов
 
         self.player_sprite_images = []
         self.player_sprite_images_left = []
@@ -49,7 +57,7 @@ class MyGame(arcade.Window):
         self.player_sprite = None
 
         # Our Scene Object
-        self.scene = None ###
+        self.scene = None
 
         # Камера, которую можно использовать для прокрутки экрана
         self.camera = None
@@ -73,8 +81,6 @@ class MyGame(arcade.Window):
 
         arcade.set_background_color(arcade.csscolor.MOCCASIN)
     def setup (self):
-
-
         # Загрузите фоновое изображение
 
         self.background_list = arcade.SpriteList()
@@ -86,14 +92,17 @@ class MyGame(arcade.Window):
 
         self.background_sprite.center_x = IMAGE_WIDTH // 0.0020
         self.background_sprite.center_y = SCREEN_HEIGHT // 1.9
-        self.background_sprite.change_x = -5
+        self.background_sprite.change_x = 0
 
         self.background_list.append(self.background_sprite)
 
-        for i in range(1, 5):
-            self.player_sprite_images.append(arcade.load_texture(f"images/moon1{i}.png"))
-        for i in range(4,0,-1):
-            self.player_sprite_images_left.append(arcade.load_texture(f"images/moon2{i}.png", flipped_horizontally=True))
+        global startCenterPosition_X
+        startCenterPosition_X = self.background_list.center[0]
+
+        for i in range(1, 4):
+            self.player_sprite_images.append(arcade.load_texture(f"images/moon{i}.png"))
+        for i in range(1, 4):
+            self.player_sprite_images_left.append(arcade.load_texture(f"images/moon{i}.png", flipped_horizontally=True))
 
         # Инициализировать сцену
         self.camera = arcade.Camera(self.width, self.height)
@@ -108,26 +117,26 @@ class MyGame(arcade.Window):
         self.wall_list = arcade.SpriteList(use_spatial_hash=True)
 
 
-        # Initialize Scene ###
-        self.scene = arcade.Scene() ###
+        # Initialize Scene
+        self.scene = arcade.Scene()
 
-        # Create the Sprite lists ###
-        self.scene.add_sprite_list("Player") ###
-        self.scene.add_sprite_list("Walls", use_spatial_hash=True) ###
+        # Create the Sprite lists
+        self.scene.add_sprite_list("Player")
+        self.scene.add_sprite_list("Walls", use_spatial_hash=True)
 
 
         # Настройте проигрыватель, специально разместив его по этим координатам.
 
-        image_source = "images/mooncalf.png"
+        image_source = "images/moon3.png"
         self.player_sprite = arcade.Sprite(image_source, CHARACTER_SCALING)
         self.player_sprite.center_x = 100
         self.player_sprite.center_y = 140
 
-        self.scene.add_sprite("Player", self.player_sprite) ### Player вместо картинки
+        self.scene.add_sprite("Player", self.player_sprite)
 
         # Создайте почву
         # Это показывает использование цикла для размещения нескольких спрайтов горизонтально
-        for x in range(0, 16048, 63):
+        for x in range(0, 16848, 63):
             wall = arcade.Sprite("images/zemlya.png", TILE_SCALING)
             wall.center_x = x
             wall.center_y = 30
@@ -176,6 +185,7 @@ class MyGame(arcade.Window):
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player_sprite, gravity_constant=GRAVITY, walls=self.scene["Walls"]
         )
+        #self.background_sprite.center_x
 
     def center_camera_to_player(self):
         screen_center_x = self.player_sprite.center_x - (self.camera.viewport_width / 2)
@@ -193,6 +203,7 @@ class MyGame(arcade.Window):
             screen_center_y = 0
         player_centered = screen_center_x, screen_center_y
 
+        self.background_sprite.center_x = -screen_center_x + startCenterPosition_X
         self.camera.move_to(player_centered)
 
 
@@ -241,7 +252,7 @@ class MyGame(arcade.Window):
 
         if self.player_jump:
             self.player_sprite.center_y += 2
-            if self.player_sprite.center_y > self.jump_start + JUMP_MAX_HEIGHT:
+            if self.player_sprite.center_y > self.jump_start + 10:
                 self.player_jump = False
         else:
             self.player_sprite.center_y -= 2
@@ -269,11 +280,38 @@ class MyGame(arcade.Window):
 
 
         self.background_list.update()
+        global frameInSecond
+        if (isKeyPresed):
+            if (isKeyLeft):
+                frameInSecond += 1
+                if (frameInSecond < 20):
+                    self.player_sprite.texture = self.player_sprite_images_left[0]
+                elif (frameInSecond < 40):
+                    self.player_sprite.texture = self.player_sprite_images_left[1]
+                elif (frameInSecond < 60):
+                    self.player_sprite.texture = self.player_sprite_images_left[2]
+                elif (frameInSecond < 80):
+                    self.player_sprite.texture = self.player_sprite_images_left[1]
+                else: frameInSecond = 0
+            else:
+                frameInSecond += 1
+                if (frameInSecond < 20):
+                    self.player_sprite.texture = self.player_sprite_images[0]
+                elif (frameInSecond < 40):
+                    self.player_sprite.texture = self.player_sprite_images[1]
+                elif (frameInSecond < 60):
+                    self.player_sprite.texture = self.player_sprite_images[2]
+                elif (frameInSecond < 80):
+                    self.player_sprite.texture = self.player_sprite_images[1]
+                else: frameInSecond = 0
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
-
+        global isKeyPresed
+        global isKeyLeft
         if key == arcade.key.UP or key == arcade.key.W or key == arcade.key.SPACE:
+            self.player_jump = True
+            self.jump_start = self.player_sprite.center_y
             if self.physics_engine.can_jump():
                 self.player_sprite.change_y = PLAYER_JUMP_SPEED
                 arcade.play_sound(self.jump_sound)
@@ -281,28 +319,27 @@ class MyGame(arcade.Window):
             self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
         elif key == arcade.key.LEFT or key == arcade.key.A:
             self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
+            isKeyPresed = True
+            isKeyLeft = True
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
-            self.player_sprite.texture = self.player_sprite_images[int(self.player_sprite.change_x / PLAYER_SPRITE_IMAGE_CHANGE_SPEED) % 4]
-        elif key == arcade.key.UP or key == arcade.key.W:
-            self.player_jump = True
-            self.jump_start = self.player_sprite.center_y
-            self.player_sprite.texture = self.player_sprite_images_left[int(self.player_sprite.change_x / PLAYER_SPRITE_IMAGE_CHANGE_SPEED) % 4]
-
+            isKeyPresed = True
+            isKeyLeft = False
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
-
+        global isKeyPresed
+        global isKeyLeft 
         if key == arcade.key.UP or key == arcade.key.W or key == arcade.key.SPACE:
-            self.player_sprite.change_y = 3
+            self.player_sprite.change_y = 0
         elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.player_sprite.change_y = 3
+            self.player_sprite.change_y = 0
         elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.change_x = 3
+            self.player_sprite.change_x = 0
+            isKeyPresed = False
         elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_sprite.change_x = 3
-
-
+            self.player_sprite.change_x = 0
+            isKeyPresed = False
 
 def main():
     """Main function"""
@@ -310,14 +347,5 @@ def main():
     window.setup()
     arcade.run()
 
-
 if __name__ == "__main__":
     main()
-
-
-
-    #45:56 ЛЕКЦИЯ 26/02 ✓
-    #10:14  ЛЕКЦИЯ 5/03 ✓
-    # лекция 12.03(3) ✓
-    # лекция 26.03 (4)
-
